@@ -6,3 +6,6 @@ CLAUDE.md
 
 # Course materials — the instructor's slides/assignment PDFs, not ours to publish
 *.pdf
+
+# Personal working docs — kept local, not for the public repo
+docs/sprint0-video-script.md

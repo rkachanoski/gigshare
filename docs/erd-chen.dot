@@ -5,6 +5,7 @@
 //   rectangle = entity set
 //   ellipse   = attribute  (identifier attributes have a solid underline)
 //   diamond   = relationship
+//   triangle  = generalization ("isa"): subtypes inherit the supertype's identifier
 // Identifiers are drawn underlined using an HTML-like label with <u>...</u>.
 // Multiplicity: each entity--relationship edge is labelled (min-card, max-card)
 //   for that entity's participation (Batini notation); N = "many".
@@ -17,75 +18,70 @@ graph GigShareERD {
 
     // ---- entity sets (rectangles) ----
     node [shape=box, style="filled", fillcolor="#FFE08A", penwidth=1.4, width=1.1, height=0.6];
-    Musician; Act; Venue; Gig; EarningsReport [label="Earnings\nReport"];
+    Musician; Venue; Gig; Party; Act; Promoter;
+    EarningsReport [label="Earnings\nReport"];
+
+    // ---- generalization (isa triangle): Party is a supertype of Act and Promoter ----
+    node [shape=triangle, style="filled", fillcolor="#EDEDED", penwidth=1.1, width=0.55, height=0.45, fontsize=8];
+    isa [label="isa"];
 
     // ---- relationships (diamonds) ----
-    node [shape=diamond, style="filled", fillcolor="#F7A8B8", penwidth=1.2, width=1.3, height=0.8];
-    MemberOf     [label="MemberOf"];
-    HostedAt     [label="HostedAt"];
-    Performed    [label="Performed"];
-    Documents    [label="Documents"];
-    EarnedBy     [label="EarnedBy"];
-    SubmittedBy  [label="SubmittedBy"];
+    node [shape=diamond, style="filled", fillcolor="#F7A8B8", penwidth=1.2, width=1.3, height=0.8, fontsize=10];
+    MemberOf [label="MemberOf"];
+    HostedAt [label="HostedAt"];
+    FiledBy  [label="FiledBy"];
+    Covers   [label="Covers"];
 
     // ---- attributes (ellipses); identifiers underlined ----
-    node [shape=ellipse, style="filled", fillcolor="#DCEEFB", penwidth=1.0, width=0.9, height=0.4];
+    node [shape=ellipse, style="filled", fillcolor="#DCEEFB", penwidth=1.0, width=0.9, height=0.4, fontsize=10];
 
     // Musician
-    m_id  [label=<<u>musician_id</u>>];
-    m_nm  [label="display_name"];
-    m_em  [label="email"];
-    m_in  [label="primary_instrument"];
-    m_ct  [label="home_city"];
+    m_id [label=<<u>musician_id</u>>]; m_nm [label="display_name"]; m_em [label="email"];
+    m_in [label="primary_instrument"]; m_ct [label="home_city"];
 
-    // Act
-    a_id  [label=<<u>act_id</u>>];
-    a_nm  [label="act_name"];
-    a_gn  [label="genre"];
-    a_tp  [label="act_type"];
+    // Party (supertype)
+    p_id [label=<<u>party_id</u>>]; p_nm [label="party_name"]; p_ct [label="contact_info"];
+
+    // Act (subtype) — inherits party_id
+    a_gn [label="genre"]; a_tp [label="act_type"];
+
+    // Promoter (subtype) — inherits party_id
+    pr_co [label="is_company"];
 
     // Venue
-    v_id  [label=<<u>venue_id</u>>];
-    v_nm  [label="venue_name"];
-    v_ct  [label="city"];
-    v_cp  [label="capacity"];
-    v_tp  [label="venue_type"];
+    v_id [label=<<u>venue_id</u>>]; v_nm [label="venue_name"]; v_ct [label="city"];
+    v_cp [label="capacity"]; v_tp [label="venue_type"];
 
-    // Gig
-    g_id  [label=<<u>gig_id</u>>];
-    g_dt  [label="gig_date"];
-    g_dp  [label="door_price"];
-    g_vf  [label="venue_fee"];
-    g_tf  [label="technician_fees"];
-    g_ae  [label="additional_expenses"];
+    // Gig (shared anchor; also uniquely identified by venue + gig_date)
+    g_id [label=<<u>gig_id</u>>]; g_dt [label="gig_date"]; g_dp [label="door_price"];
 
-    // EarningsReport
-    r_id  [label=<<u>report_id</u>>];
-    r_gu  [label="guarantee_amount"];
-    r_dr  [label="door_revenue"];
-    r_ms  [label="merch_sales"];
-    r_np  [label="net_payout"];
-    r_at  [label="attendance"];
-    r_cu  [label="currency"];
-    r_sa  [label="submitted_at"];
+    // EarningsReport (one per party, per gig: role + agreed split + reported actuals)
+    r_id [label=<<u>report_id</u>>]; r_rl [label="reporter_role"];
+    r_ag [label="agreed_guarantee"]; r_ds [label="door_split_pct"];
+    r_dr [label="door_revenue"]; r_ms [label="merch_sales"];
+    r_vf [label="venue_fee"]; r_tf [label="technician_fees"]; r_ae [label="additional_expenses"];
+    r_at [label="attendance"]; r_np [label="net_payout"];
+    r_cu [label="currency"]; r_sa [label="submitted_at"];
 
     // relationship attributes
-    mo_role [label="role"];
-    mo_act  [label="is_active"];
-    pf_bill [label="billing_slot"];
-    pf_len  [label="set_length_min"];
+    mo_role [label="role"]; mo_act [label="is_active"];
 
     // ---- attribute edges ----
     Musician -- {m_id m_nm m_em m_in m_ct};
-    Act      -- {a_id a_nm a_gn a_tp};
+    Party    -- {p_id p_nm p_ct};
+    Act      -- {a_gn a_tp};
+    Promoter -- {pr_co};
     Venue    -- {v_id v_nm v_ct v_cp v_tp};
-    Gig      -- {g_id g_dt g_dp g_vf g_tf g_ae};
-    EarningsReport -- {r_id r_gu r_dr r_ms r_np r_at r_cu r_sa};
+    Gig      -- {g_id g_dt g_dp};
+    EarningsReport -- {r_id r_rl r_ag r_ds r_dr r_ms r_vf r_tf r_ae r_at r_np r_cu r_sa};
 
-    // ---- relationship edges (entity -- diamond -- entity) ----
-    // Edge labels are (min-card, max-card) for that entity's participation.
-    edge [fontsize=9, fontcolor="#8a4b00", labeldistance=1.5];
+    // ---- generalization edges (supertype -- isa -- subtypes) ----
+    Party -- isa;
+    isa   -- Act;
+    isa   -- Promoter;
 
+    // ---- relationship edges with multiplicity (min,max) ----
+    edge [fontsize=9, fontcolor="#8a4b00"];
     Musician -- MemberOf [label="(0,N)"];
     MemberOf -- Act      [label="(1,N)"];
     MemberOf -- {mo_role mo_act} [label=""];
@@ -93,11 +89,6 @@ graph GigShareERD {
     Gig      -- HostedAt [label="(1,1)"];
     HostedAt -- Venue    [label="(0,N)"];
 
-    Act       -- Performed [label="(0,N)"];
-    Performed -- Gig       [label="(1,N)"];
-    Performed -- {pf_bill pf_len} [label=""];
-
-    EarningsReport -- Documents   [label="(1,1)"];   Documents   -- Gig      [label="(0,N)"];
-    EarningsReport -- EarnedBy    [label="(1,1)"];   EarnedBy    -- Act      [label="(0,N)"];
-    EarningsReport -- SubmittedBy [label="(1,1)"];   SubmittedBy -- Musician [label="(0,N)"];
+    EarningsReport -- FiledBy [label="(1,1)"];   FiledBy -- Party [label="(0,N)"];
+    EarningsReport -- Covers  [label="(1,1)"];   Covers  -- Gig   [label="(0,N)"];
 }
