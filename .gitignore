@@ -1,0 +1,8 @@
+# OS
+.DS_Store
+
+# Personal Claude Code context — not for the public repo
+CLAUDE.md
+
+# Course materials — the instructor's slides/assignment PDFs, not ours to publish
+*.pdf

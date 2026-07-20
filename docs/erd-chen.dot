@@ -1,0 +1,103 @@
+// GigShare — Basic Conceptual Design (Chen-notation ERD)
+// CSC 370, Summer 2026. Render with: dot -Tsvg erd-chen.dot -o erd-chen.svg
+//
+// Chen notation conventions (per course notes):
+//   rectangle = entity set
+//   ellipse   = attribute  (identifier attributes have a solid underline)
+//   diamond   = relationship
+// Identifiers are drawn underlined using an HTML-like label with <u>...</u>.
+// Multiplicity: each entity--relationship edge is labelled (min-card, max-card)
+//   for that entity's participation (Batini notation); N = "many".
+
+graph GigShareERD {
+    graph [rankdir=LR, layout=dot, splines=spline, overlap=false, concentrate=false,
+           bgcolor="white", pad=0.5, nodesep=0.5, ranksep=1.2, fontname="Helvetica"];
+    node  [fontname="Helvetica", fontsize=11];
+    edge  [fontname="Helvetica", fontsize=10, color="#8892a0", penwidth=1.0];
+
+    // ---- entity sets (rectangles) ----
+    node [shape=box, style="filled", fillcolor="#FFE08A", penwidth=1.4, width=1.1, height=0.6];
+    Musician; Act; Venue; Gig; EarningsReport [label="Earnings\nReport"];
+
+    // ---- relationships (diamonds) ----
+    node [shape=diamond, style="filled", fillcolor="#F7A8B8", penwidth=1.2, width=1.3, height=0.8];
+    MemberOf     [label="MemberOf"];
+    HostedAt     [label="HostedAt"];
+    Performed    [label="Performed"];
+    Documents    [label="Documents"];
+    EarnedBy     [label="EarnedBy"];
+    SubmittedBy  [label="SubmittedBy"];
+
+    // ---- attributes (ellipses); identifiers underlined ----
+    node [shape=ellipse, style="filled", fillcolor="#DCEEFB", penwidth=1.0, width=0.9, height=0.4];
+
+    // Musician
+    m_id  [label=<<u>musician_id</u>>];
+    m_nm  [label="display_name"];
+    m_em  [label="email"];
+    m_in  [label="primary_instrument"];
+    m_ct  [label="home_city"];
+
+    // Act
+    a_id  [label=<<u>act_id</u>>];
+    a_nm  [label="act_name"];
+    a_gn  [label="genre"];
+    a_tp  [label="act_type"];
+
+    // Venue
+    v_id  [label=<<u>venue_id</u>>];
+    v_nm  [label="venue_name"];
+    v_ct  [label="city"];
+    v_cp  [label="capacity"];
+    v_tp  [label="venue_type"];
+
+    // Gig
+    g_id  [label=<<u>gig_id</u>>];
+    g_dt  [label="gig_date"];
+    g_dp  [label="door_price"];
+    g_vf  [label="venue_fee"];
+    g_tf  [label="technician_fees"];
+    g_ae  [label="additional_expenses"];
+
+    // EarningsReport
+    r_id  [label=<<u>report_id</u>>];
+    r_gu  [label="guarantee_amount"];
+    r_dr  [label="door_revenue"];
+    r_ms  [label="merch_sales"];
+    r_np  [label="net_payout"];
+    r_at  [label="attendance"];
+    r_cu  [label="currency"];
+    r_sa  [label="submitted_at"];
+
+    // relationship attributes
+    mo_role [label="role"];
+    mo_act  [label="is_active"];
+    pf_bill [label="billing_slot"];
+    pf_len  [label="set_length_min"];
+
+    // ---- attribute edges ----
+    Musician -- {m_id m_nm m_em m_in m_ct};
+    Act      -- {a_id a_nm a_gn a_tp};
+    Venue    -- {v_id v_nm v_ct v_cp v_tp};
+    Gig      -- {g_id g_dt g_dp g_vf g_tf g_ae};
+    EarningsReport -- {r_id r_gu r_dr r_ms r_np r_at r_cu r_sa};
+
+    // ---- relationship edges (entity -- diamond -- entity) ----
+    // Edge labels are (min-card, max-card) for that entity's participation.
+    edge [fontsize=9, fontcolor="#8a4b00", labeldistance=1.5];
+
+    Musician -- MemberOf [label="(0,N)"];
+    MemberOf -- Act      [label="(1,N)"];
+    MemberOf -- {mo_role mo_act} [label=""];
+
+    Gig      -- HostedAt [label="(1,1)"];
+    HostedAt -- Venue    [label="(0,N)"];
+
+    Act       -- Performed [label="(0,N)"];
+    Performed -- Gig       [label="(1,N)"];
+    Performed -- {pf_bill pf_len} [label=""];
+
+    EarningsReport -- Documents   [label="(1,1)"];   Documents   -- Gig      [label="(0,N)"];
+    EarningsReport -- EarnedBy    [label="(1,1)"];   EarnedBy    -- Act      [label="(0,N)"];
+    EarningsReport -- SubmittedBy [label="(1,1)"];   SubmittedBy -- Musician [label="(0,N)"];
+}
