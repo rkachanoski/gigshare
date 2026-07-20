@@ -44,9 +44,9 @@ for a specific performance at a specific venue, plus the surrounding financial c
 
 ## 2. Requirements
 
-Following the course method (*"what should the system do?"* → *"what data must we
-maintain to do it?"*), requirements are split into **application/functional**
-requirements and the **business rules** that constrain them.
+Requirements are derived by asking *"what should the system do?"* and then *"what data
+must we maintain to do it?"*, and are split into **application/functional** requirements
+and the **business rules** that constrain them.
 
 ### 2.1 Before the course (baseline)
 > Per the kick-off rubric, we contrast against the empty list we started with.
@@ -106,8 +106,8 @@ gig, holding that party's role, agreed split, and reported financials.
 
 ## 3. Basic Conceptual Design (ERD)
 
-Following the notes, the conceptual model is an **Entity-Relationship Diagram** in
-(approximately) **Chen notation**:
+The conceptual model is an **Entity-Relationship Diagram** in (approximately)
+**Chen notation**:
 
 - **Entity set** → rectangle
 - **Attribute** → ellipse; the **identifier** is <u>underlined</u>
@@ -116,14 +116,21 @@ Following the notes, the conceptual model is an **Entity-Relationship Diagram** 
 - **Generalization** → an **`isa`** triangle links a supertype to its subtypes; subtypes
   **inherit the supertype's identifier** (here: `Party` ← `Act`, `Promoter`)
 - **Multiplicity** → each entity–relationship edge is labelled `(min-card, max-card)`
-  (Batini min/max-card notation from the Multiplicity notes): the minimum and maximum
-  number of times an instance of that entity participates in the relationship. `N` = "many".
+  (Batini min/max-card notation), placed **next to the entity it describes**: the minimum
+  and maximum number of times an instance of *that* entity participates in the
+  relationship. `N` = "many". The side whose max is `1` is the "one" side of a many-one.
+  This is equivalent to arrowhead many-one/one-one notation, but additionally captures
+  the minimum (optional vs. mandatory participation).
+
+> **Notation choice:** multiplicity is shown with min/max-card labels by the author's
+> preference, since they also encode optionality. This can be switched to the arrowhead
+> notation if the course requires it.
 
 ### 3.1 Diagram (Chen notation)
 
-The authoritative conceptual model, in the course's Chen notation — entity sets
-(rectangles), attributes (ellipses, **identifiers underlined**), and relationships
-(diamonds). Source: [`docs/erd-chen.dot`](docs/erd-chen.dot)
+The authoritative conceptual model, in Chen notation — entity sets (rectangles),
+attributes (ellipses, **identifiers underlined**), and relationships (diamonds).
+Source: [`docs/erd-chen.dot`](docs/erd-chen.dot)
 (render with `dot -Tsvg docs/erd-chen.dot -o docs/erd-chen.svg`).
 
 ![GigShare Chen-notation ERD](docs/erd-chen.svg)
@@ -327,9 +334,8 @@ Multiplicity is read as `(min-card, max-card)` for **each side's** participation
 Both are enforced as `UNIQUE` constraints at logical design.
 
 **Design note (attributes on relationships):** `role` describes the *connection* between
-a Musician and an Act (not the person or the band alone) — so, following the notes'
-`grade`-on-`EnrolledIn` example, it lives on the `MemberOf` relationship rather than on an
-entity set.
+a Musician and an Act (not the person or the band alone), so it lives on the `MemberOf`
+relationship rather than on an entity set.
 
 **Design note (report as its own entity).** `EarningsReport` is a full entity — one row
 per party per gig — with its own identity, filer, timestamp, and room to grow (verification

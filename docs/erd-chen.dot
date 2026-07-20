@@ -80,15 +80,17 @@ graph GigShareERD {
     isa   -- Act;
     isa   -- Promoter;
 
-    // ---- relationship edges with multiplicity (min,max) ----
-    edge [fontsize=9, fontcolor="#8a4b00"];
-    Musician -- MemberOf [label="(0,N)"];
-    MemberOf -- Act      [label="(1,N)"];
-    MemberOf -- {mo_role mo_act} [label=""];
+    // ---- relationship edges: multiplicity (min,max) placed at the ENTITY end ----
+    // taillabel/headlabel anchor each (min,max) next to the entity it describes,
+    // not at the midpoint — so it's unambiguous which entity's participation it states.
+    edge [labelfontsize=10, labelfontcolor="#8a4b00", labeldistance=2.4, labelangle=18];
+    Musician -- MemberOf [taillabel="(0,N)"];
+    MemberOf -- Act      [headlabel="(1,N)"];
+    MemberOf -- {mo_role mo_act};
 
-    Gig      -- HostedAt [label="(1,1)"];
-    HostedAt -- Venue    [label="(0,N)"];
+    Gig      -- HostedAt [taillabel="(1,1)"];
+    HostedAt -- Venue    [headlabel="(0,N)"];
 
-    EarningsReport -- FiledBy [label="(1,1)"];   FiledBy -- Party [label="(0,N)"];
-    EarningsReport -- Covers  [label="(1,1)"];   Covers  -- Gig   [label="(0,N)"];
+    EarningsReport -- FiledBy [taillabel="(1,1)"];   FiledBy -- Party [headlabel="(0,N)"];
+    EarningsReport -- Covers  [taillabel="(1,1)"];   Covers  -- Gig   [headlabel="(0,N)"];
 }
