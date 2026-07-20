@@ -355,10 +355,7 @@ increase complexity as competencies advance:
 | **Conceptual design (ERD + multiplicity)** | §3 this deliverable — entities, identifiers, relationships, and `(min,max)` multiplicities | more entity sets: tours, tickets, agents |
 | **Generalization / specialization** | `Party` supertype with `Act` / `Promoter` subtypes (`isa`) | subtype-to-table mapping strategies; more party types |
 | **Logical design / relational mapping** *(next)* | ERD → tables; `MemberOf` becomes a join table; many-one relationships and the `isa` become FKs; multiplicities drive keys | normalization of address/city |
-| **SQL (DDL + queries)** | `CREATE TABLE`s; benchmark queries (avg payout/head) | aggregation, `GROUP BY`, views |
-| **Normalization** | split `city`/venue metadata, avoid anomalies | 3NF/BCNF analysis |
-| **Analytics / advanced queries** | community benchmarks; **reconcile conflicting per-party reports** into one canonical picture | window functions, provenance/confidence, discrepancy flagging |
-| **Anonymisation / access control** | members see aggregates, not raw peer data | roles, permissions, privacy-preserving views |
+| **SQL (DDL + queries)** *(next)* | `CREATE TABLE`s; benchmark queries (avg payout/head) | aggregation, `GROUP BY`, views |
 
 ### Data acquisition plan
 We do not need real (sensitive) financial data to build and demo the system:
