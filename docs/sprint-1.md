@@ -216,8 +216,10 @@ The remaining supporting queries (roster via the association table; multi-party 
 
 ## 5. Verification (stands up to testing)
 
-Loaded on MySQL 9.7 (Homebrew). Row counts after seed: musician 5, party 6 (act 4 +
-promoter 2), venue 6, gig 6, member_of 8, earnings_report 10.
+Reproduce with **[`sql/verify.sh`](../sql/verify.sh)**; the full captured run is in
+**[`sprint-1-verification.md`](sprint-1-verification.md)**. Loaded on MySQL 9.7 (Homebrew).
+Row counts after seed: musician 5, party 6 (act 4 + promoter 2), venue 6, gig 6,
+member_of 8, earnings_report 10.
 
 **Q1 — benchmark** (performer take-home per head, by band):
 
