@@ -66,6 +66,12 @@ supertype is a real table other things can reference), avoids nulls for subtype-
 columns, and leaves an obvious place to add a future party type (e.g. a booking agent).
 
 ### 2.2 Relational schema (relation list)
+
+> **Sprint 2 note:** this schema was analysed for functional dependencies in
+> [Sprint 2 §2](sprint-2.md#2-functional-dependencies-and-normal-forms) and found to be
+> in **BCNF** as written — no decomposition was required, so the relations below are
+> still current. Performance indexes added later live in
+> [`sql/indexes.sql`](../sql/indexes.sql), deliberately separate from the logical design.
 Primary keys are <u>underlined</u>; foreign keys are marked → target.
 
 - **musician**(<u>musician_id</u>, display_name, email `UNIQUE`, primary_instrument, home_city)

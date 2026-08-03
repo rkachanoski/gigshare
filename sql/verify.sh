@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 # ============================================================================
-# GigShare — Sprint 1 verification harness
+# GigShare — verification harness (Sprints 1-2)
 # Loads the schema + seed, runs the analytics queries, and checks that every
 # integrity rule REJECTS an offending insert. Prints a captured, reproducible
-# log; the committed output lives in docs/sprint-1-verification.md.
+# log; the committed output lives in docs/sprint-N-verification.md.
+#
+# Sprint 2 adds:
+#   * the normalization checks (sql/normalization.sql) — FD claims, lossless
+#     decomposition, and a lossy control that must be detected
+#   * a re-run of every constraint check against the ~32k-row generated dataset,
+#     confirming the integrity rules still hold at scale
 #
 # Usage:  sql/verify.sh            (defaults to: mysql -u root)
 #         MYSQL="mysql -u me -p"   sql/verify.sh
+#         SKIP_SCALE=1 sql/verify.sh   (skip the large-dataset section)
 # ============================================================================
 set -uo pipefail
 
@@ -17,7 +24,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 hr() { printf '=%.0s' {1..76}; echo; }
 section() { echo; hr; echo "# $1"; hr; }
 
-echo "GigShare Sprint 1 verification — $(date '+%Y-%m-%d %H:%M:%S %Z')"
+echo "GigShare verification (Sprints 1-2) — $(date '+%Y-%m-%d %H:%M:%S %Z')"
 $MYSQL -e "SELECT VERSION() AS mysql_version;" 2>/dev/null
 
 section "1. Load schema + seed"
@@ -99,6 +106,58 @@ expect_fail "FK FiledBy (party must exist)" \
 expect_fail "trigger: role<->party kind" \
   "INSERT INTO earnings_report (party_id,gig_id,reporter_role) VALUES (5,4,'headliner');"
 
+section "7. Normalization checks (Sprint 2)"
+# sql/normalization.sql emits a `verdict` column of PASS/FAIL on every check:
+# the claimed FDs must hold in the data, the decomposition of the naive wide
+# table must be lossless, and a deliberately lossy control must be caught.
+norm_out="$($MYSQL "$DB" -t < "$HERE/normalization.sql" 2>&1)"
+echo "$norm_out"
+norm_fail="$(echo "$norm_out" | grep -c 'FAIL')"
+if [[ "$norm_fail" -eq 0 ]]; then
+  echo; echo "PASS  normalization: no FAIL verdicts"
+else
+  echo; echo "FAIL  normalization: $norm_fail check(s) reported FAIL"
+  fail=$((fail + norm_fail))
+fi
+
+if [[ -z "${SKIP_SCALE:-}" ]]; then
+section "8. Constraints still hold at scale (~32k generated reports)"
+# A rule that holds over 10 hand-written rows has not really been tested. Rebuild
+# with the generated dataset and re-run every check against it. The offending
+# values are read back OUT of the generated data, since its ids are not fixed.
+$MYSQL < "$HERE/schema.sql"
+python3 "$HERE/generate.py" 2>/dev/null | $MYSQL "$DB" && echo "generated dataset loaded"
+
+$MYSQL "$DB" -t -e "
+  SELECT 'gig' AS table_name, COUNT(*) AS n_rows FROM gig
+  UNION ALL SELECT 'earnings_report', COUNT(*) FROM earnings_report;"
+
+# Pull real values to collide with.
+read -r S_PARTY S_GIG <<< "$($MYSQL "$DB" -N -B -e \
+  "SELECT party_id, gig_id FROM earnings_report LIMIT 1;")"
+read -r S_VENUE S_DATE <<< "$($MYSQL "$DB" -N -B -e \
+  "SELECT venue_id, gig_date FROM gig LIMIT 1;")"
+S_PROMO="$($MYSQL "$DB" -N -B -e \
+  "SELECT party_id FROM party WHERE party_kind='promoter' LIMIT 1;")"
+echo "colliding against: report ($S_PARTY,$S_GIG)  gig ($S_VENUE,$S_DATE)  promoter $S_PROMO"
+echo
+
+expect_fail "UNIQUE(party_id,gig_id) @scale" \
+  "INSERT INTO earnings_report (party_id,gig_id,reporter_role,net_payout) VALUES ($S_PARTY,$S_GIG,'headliner',999);"
+expect_fail "UNIQUE(venue_id,gig_date) @scale" \
+  "INSERT INTO gig (venue_id,gig_date,door_price) VALUES ($S_VENUE,'$S_DATE',10);"
+expect_fail "FK FiledBy @scale" \
+  "INSERT INTO earnings_report (party_id,gig_id,reporter_role) VALUES (999999,$S_GIG,'support');"
+expect_fail "trigger: role<->kind @scale" \
+  "INSERT INTO earnings_report (party_id,gig_id,reporter_role) VALUES ($S_PROMO,$S_GIG,'headliner');"
+
+# Restore the small seed so the script leaves the database as Sprint 1 expects.
+$MYSQL < "$HERE/schema.sql" && $MYSQL "$DB" < "$HERE/seed.sql"
+echo; echo "database restored to the small seed"
+else
+  section "8. Constraints at scale — SKIPPED (SKIP_SCALE set)"
+fi
+
 section "Result"
-echo "constraint checks: $pass passed, $fail failed"
+echo "checks: $pass passed, $fail failed"
 [[ $fail -eq 0 ]] && echo "ALL CHECKS PASSED" || { echo "SOME CHECKS FAILED"; exit 1; }

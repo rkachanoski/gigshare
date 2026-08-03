@@ -74,14 +74,22 @@ docs live in [`docs/`](docs/).
 |---|---|---|---|
 | **0 — Kick-Off** | Requirements & Basic Conceptual Design | [`docs/sprint-0.md`](docs/sprint-0.md) | ✅ Complete |
 | **1 — Logical Design & SQL** | ERD → relational schema, relational algebra, MySQL DDL + queries | [`docs/sprint-1.md`](docs/sprint-1.md), [`sql/`](sql/) | ✅ Complete |
-| **2 — Normalization & Performance** | FD/normalization analysis, views, indexing & performance | *planned — see [Sprint 1 §6](docs/sprint-1.md#6-next-sprint-plan-sprint-2--normalization--query-performance)* | ⬜ Planned |
+| **2 — Normalization & Performance** | FD/BCNF analysis, lossless decomposition, indexing & measured performance | [`docs/sprint-2.md`](docs/sprint-2.md), [`sql/`](sql/) | ✅ Complete |
+| **3 — ACID Transactions** | Transactional report submission, atomicity/consistency/durability, savepoints | *planned — see [Sprint 2 §7](docs/sprint-2.md#7-next-sprint-plan-sprint-3--acid-transactions)* | ⬜ Planned |
 
 ### Running the SQL
 ```bash
 mysql -u root < sql/schema.sql          # creates the `gigshare` database + tables
 mysql -u root gigshare < sql/seed.sql   # loads a small synthetic dataset
 mysql -u root gigshare < sql/queries.sql
+
+sql/verify.sh    # schema, seed, analytics, constraints, normalization, at-scale checks
+sql/bench.sh     # the indexing experiment: plans + timings, before and after
+python3 sql/generate.py | mysql -u root gigshare   # ~32k synthetic reports
 ```
+`sql/verify.sh` and `sql/bench.sh` exit non-zero on failure. Their captured runs are
+committed in [`docs/sprint-1-verification.md`](docs/sprint-1-verification.md) and
+[`docs/sprint-2-verification.md`](docs/sprint-2-verification.md).
 
 ---
 
@@ -97,15 +105,19 @@ increase complexity as competencies advance.
 | **Generalization / specialization** | `Party` supertype with `Act` / `Promoter` subtypes (`isa`) | ✅ | more party types (e.g. booking agent) |
 | **Logical design / relational mapping** | ERD → tables; association table + FKs; subtype→table strategy ([Sprint 1 §2](docs/sprint-1.md#2-logical-design--erd--relational-schema)) | ✅ | normalization of address/city |
 | **Relational algebra** | Analytics expressed in RA alongside SQL ([Sprint 1 §4](docs/sprint-1.md#4-relational-algebra--sql)) | ✅ | more complex algebra (division, outer joins) |
-| **SQL (DDL + queries)** | `CREATE TABLE`s, constraints, benchmark + reconciliation queries ([`sql/`](sql/)) | ✅ | aggregation, `GROUP BY`, views |
-| **Normalization / FD theory** | FD analysis, 3NF/BCNF check | ⬜ | lossless-join decomposition |
-| **Physical design / performance** | Indexing, `EXPLAIN`, timing experiments | ⬜ | larger synthetic dataset |
+| **SQL (DDL + queries)** | `CREATE TABLE`s, constraints, benchmark + reconciliation queries ([`sql/`](sql/)) | ✅ | aggregation, `GROUP BY` |
+| **Normalization / FD theory** | FD sets, candidate keys by closure, BCNF proof; lossless + dependency-preserving decomposition with a lossy control ([Sprint 2 §2–3](docs/sprint-2.md#2-functional-dependencies-and-normal-forms)) | ✅ | multivalued dependencies / 4NF |
+| **Physical design / performance** | 32k-row generator, covering & range indexes, `EXPLAIN` + timings, a measured negative result ([Sprint 2 §4](docs/sprint-2.md#4-indexing-and-query-performance)) | ✅ | query-plan rewriting, partitioning |
+| **Transactions / ACID** | Transactional report submission; atomicity, consistency, durability, savepoints | ⬜ | isolation levels, deadlocks |
+| **Views / access control** | Anonymised benchmark view enforced by `GRANT` — *deferred from Sprint 2, see [§5.1](docs/sprint-2.md#51-the-dropped-goal-views)* | ⬜ | row-level security |
 
 ### Data acquisition plan
 We do not need real (sensitive) financial data to build and demo the system:
 1. **Synthetic generation** — a seed producing realistic gigs/venues/reports (plausible
    capacities, door splits, payouts) for development and analytics demos. The current
    [`sql/seed.sql`](sql/seed.sql) uses real Victoria venues with synthetic figures.
+   [`sql/generate.py`](sql/generate.py) scales this to ~32,000 reports from a fixed
+   seed for reproducibility, supporting the performance work.
 2. **Public reference points** — venue capacities and ticket prices from public listings
    to calibrate the synthetic distributions.
 3. *(stretch)* a small **opt-in real submission** form once the schema stabilises.
@@ -116,15 +128,21 @@ We do not need real (sensitive) financial data to build and demo the system:
 
 - **Repo:** https://github.com/rkachanoski/gigshare
 - **Team:** solo (1 member — Reg Kachanoski).
-- **Submission per sprint:** git link + commit hash + video. Video length limit for a
-  solo project is `4 + 2.0 × 1 = 6.0` minutes (hard cap).
+- **Submission per sprint:** git link + commit hash + video, with group members named in
+  the submission comments.
+- **Video length limit:** `2 + 1.5 × group size` minutes — a hard cap of **3.5 minutes**
+  for this solo project. Any overrun is a failing grade. This formula took effect at
+  Sprint 2, superseding the `4 + 2.0 × group size` rule that applied to Sprints 0–1.
 - **AI-use disclosure:** generative AI (Claude) assisted with drafting the requirements and
-  conceptual-design document, structuring/rendering the ERD (Sprint 0), and — in Sprint 1 —
+  conceptual-design document, structuring/rendering the ERD (Sprint 0); in Sprint 1,
   drafting the relational mapping, MySQL DDL, the relational-algebra formulations, and the
-  synthetic seed/queries. All design decisions, requirements, business rules, and the
-  project concept are the author's own; the AI's output was reviewed, run, and verified
-  against a live MySQL instance. Per-component attribution is maintained here as the project
-  grows.
+  synthetic seed/queries; and in Sprint 2, drafting the FD/normalization analysis, the
+  synthetic data generator, the indexing experiment harness, and the sprint write-up.
+  All design decisions, requirements, business rules, and the project concept are the
+  author's own. The AI's output was reviewed, run, and verified against a live MySQL
+  instance; every figure quoted in the sprint documents originates from a captured run
+  of the committed harnesses. Per-component attribution is maintained here as the
+  project grows.
 
 ---
 
